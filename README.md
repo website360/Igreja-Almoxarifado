@@ -82,12 +82,6 @@ chmod 755 uploads
 http://localhost/SISTEMA%20IGREJA%202026/
 ```
 
-### Credenciais Padrão
-- **Email:** admin@igreja.com
-- **Senha:** admin123
-
-⚠️ **Importante:** Altere a senha após o primeiro login!
-
 ## 📁 Estrutura do Projeto
 
 ```

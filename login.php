@@ -412,10 +412,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <h1>Bem-vindo de volta!</h1>
                 <p class="subtitle">Acesse sua conta para se conectar com a comunidade e acompanhar os eventos.</p>
 
-                <blockquote>
-                    "Onde dois ou três estiverem reunidos em meu nome, ali estou no meio deles."
-                </blockquote>
-                <p class="verse-ref">Mateus 18:20</p>
             </div>
 
             <svg class="login-banner-wave" viewBox="0 0 1440 120" preserveAspectRatio="none">
@@ -491,7 +487,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </form>
 
                 <div class="login-footer">
-                    <p>&copy; <?= date('Y') ?> <?= APP_NAME ?></p>
+                    <p>Desenvolvido por Agência May</p>
                 </div>
             </div>
         </div>

@@ -7,7 +7,7 @@
 // Configurações da aplicação
 define('APP_NAME', 'Igreja Conectada');
 define('APP_VERSION', '1.0.0');
-define('APP_URL', 'http://sistema.ibavivamentomundial.com.br');
+define('APP_URL', 'https://sistema.ibavivamentomundial.com.br');
 define('APP_DEBUG', true);
 
 // Timezone

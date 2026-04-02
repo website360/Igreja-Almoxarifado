@@ -59,6 +59,5 @@ AddDefaultCharset UTF-8
 </IfModule>
 
 # Error pages
-ErrorDocument 404 /SISTEMA%20IGREJA%202026/404.php
-ErrorDocument 403 /SISTEMA%20IGREJA%202026/acesso-negado.php
-ErrorDocument 500 /SISTEMA%20IGREJA%202026/500.php
+ErrorDocument 404 /404.php
+ErrorDocument 403 /acesso-negado.php

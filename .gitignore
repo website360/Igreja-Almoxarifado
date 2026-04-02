@@ -19,3 +19,4 @@ Thumbs.db
 # Dependências
 node_modules/
 vendor/
+cookies.txt

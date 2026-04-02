@@ -1,0 +1,21 @@
+# Uploads dos usuários
+uploads/*
+!uploads/.gitkeep
+
+# Logs
+*.log
+
+# IDE e OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ambiente local
+.env
+
+# Dependências
+node_modules/
+vendor/

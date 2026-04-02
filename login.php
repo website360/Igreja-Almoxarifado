@@ -259,9 +259,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .input-wrapper input:focus {
-            border-color: #7c3aed;
+            border-color: #3B82F6;
             background: #fff;
-            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
         }
 
         .input-wrapper input::placeholder {
@@ -299,13 +299,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .form-options label input[type="checkbox"] {
-            accent-color: #7c3aed;
+            accent-color: #3B82F6;
             width: 16px;
             height: 16px;
         }
 
         .form-options a {
-            color: #7c3aed;
+            color: #3B82F6;
             text-decoration: none;
             font-weight: 500;
         }
@@ -314,7 +314,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .btn-login {
             width: 100%;
             padding: 13px;
-            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+            background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
             color: white;
             border: none;
             border-radius: 10px;
@@ -323,12 +323,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-family: 'Inter', sans-serif;
             cursor: pointer;
             transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.35);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.35);
         }
 
         .btn-login:hover {
-            background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
-            box-shadow: 0 6px 20px rgba(124, 58, 237, 0.45);
+            background: linear-gradient(135deg, #1D4ED8 0%, #1E40AF 100%);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45);
             transform: translateY(-1px);
         }
 
@@ -368,7 +368,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .login-footer a {
-            color: #7c3aed;
+            color: #3B82F6;
             text-decoration: none;
             font-weight: 500;
         }

@@ -156,10 +156,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .login-banner-content h1 {
-            font-size: 2.75rem;
-            font-weight: 700;
+            font-size: 2.1rem;
+            font-weight: 800;
             margin-bottom: 16px;
             line-height: 1.2;
+            letter-spacing: -0.5px;
+            white-space: nowrap;
             text-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
 

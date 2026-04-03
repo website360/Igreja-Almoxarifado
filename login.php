@@ -134,48 +134,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             text-align: center;
         }
 
-        .login-banner-content .cross-icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 28px;
-            background: rgba(255,255,255,0.15);
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
-            overflow: hidden;
+        .login-banner-content .logo-igreja {
+            max-width: 320px;
+            margin: 0 auto 32px;
         }
 
-        .login-banner-content .cross-icon img {
+        .login-banner-content .logo-igreja img {
             width: 100%;
-            height: 100%;
-            object-fit: contain;
-            padding: 8px;
-        }
-
-        .login-banner-content .igreja-nome {
-            margin-bottom: 28px;
-            line-height: 1.4;
-        }
-
-        .login-banner-content .igreja-nome .linha1 {
-            display: block;
-            font-size: 0.8rem;
-            font-weight: 500;
-            letter-spacing: 3px;
-            color: #D4A847;
-            text-transform: uppercase;
-        }
-
-        .login-banner-content .igreja-nome .linha2 {
-            display: block;
-            font-size: 1.15rem;
-            font-weight: 600;
-            letter-spacing: 4px;
-            color: #D4A847;
-            text-transform: uppercase;
+            height: auto;
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
         }
 
         .login-banner-content h1 {
@@ -439,19 +406,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <div class="login-banner-content">
-                <div class="cross-icon">
-                    <?php 
-                    $logoUrl = getSetting('igreja_logo_url');
-                    if ($logoUrl): 
-                    ?>
-                        <img src="<?= url($logoUrl) ?>" alt="Logo">
-                    <?php else: ?>
-                        <i data-lucide="church" style="width: 36px; height: 36px; color: white;"></i>
-                    <?php endif; ?>
-                </div>
-                <div class="igreja-nome">
-                    <span class="linha1">Igreja Batista</span>
-                    <span class="linha2">Avivamento Mundial</span>
+                <div class="logo-igreja">
+                    <img src="<?= url('/assets/img/logo-igreja.png') ?>" alt="Igreja Batista Avivamento Mundial">
                 </div>
                 <h1>Bem-vindo de volta!</h1>
                 <p class="subtitle">Acesse sua conta para se conectar com a comunidade e acompanhar os eventos.</p>

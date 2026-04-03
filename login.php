@@ -531,7 +531,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </form>
 
                 <div class="login-footer">
-                    <p>Desenvolvido por <a href="https://www.agenciamay.com.br" target="_blank" style="font-weight: 600;">Agência May</a> 💛</p>
+                    <p>Desenvolvido por <a href="https://www.agenciamay.com.br" target="_blank" style="font-weight: 600; color: #9ca3af; text-decoration: none;">Agência May</a> 💛</p>
                 </div>
             </div>
         </div>

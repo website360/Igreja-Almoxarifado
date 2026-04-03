@@ -155,6 +155,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 8px;
         }
 
+        .login-banner-content .igreja-nome {
+            margin-bottom: 28px;
+            line-height: 1.4;
+        }
+
+        .login-banner-content .igreja-nome .linha1 {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 3px;
+            color: #D4A847;
+            text-transform: uppercase;
+        }
+
+        .login-banner-content .igreja-nome .linha2 {
+            display: block;
+            font-size: 1.15rem;
+            font-weight: 600;
+            letter-spacing: 4px;
+            color: #D4A847;
+            text-transform: uppercase;
+        }
+
         .login-banner-content h1 {
             font-size: 2.1rem;
             font-weight: 800;
@@ -425,6 +448,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?php else: ?>
                         <i data-lucide="church" style="width: 36px; height: 36px; color: white;"></i>
                     <?php endif; ?>
+                </div>
+                <div class="igreja-nome">
+                    <span class="linha1">Igreja Batista</span>
+                    <span class="linha2">Avivamento Mundial</span>
                 </div>
                 <h1>Bem-vindo de volta!</h1>
                 <p class="subtitle">Acesse sua conta para se conectar com a comunidade e acompanhar os eventos.</p>

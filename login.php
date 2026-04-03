@@ -73,13 +73,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             position: absolute;
             inset: 0;
             background: url('https://images.unsplash.com/photo-1438232992991-995b7058bbb3?w=1200&q=80') center/cover no-repeat;
-            filter: brightness(0.5);
+            filter: brightness(0.2);
         }
 
         .login-banner-gradient {
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, rgba(99, 47, 163, 0.85) 0%, rgba(59, 130, 246, 0.7) 50%, rgba(16, 185, 129, 0.5) 100%);
+            background: linear-gradient(135deg, rgba(15, 10, 5, 0.85) 0%, rgba(30, 20, 10, 0.7) 50%, rgba(20, 15, 10, 0.8) 100%);
         }
 
         .login-banner-glow {
@@ -87,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             width: 400px;
             height: 400px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(212, 168, 71, 0.08) 0%, transparent 70%);
             top: 20%;
             left: 10%;
             animation: glowPulse 6s ease-in-out infinite;
@@ -98,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             width: 300px;
             height: 300px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(212, 168, 71, 0.06) 0%, transparent 70%);
             bottom: 10%;
             right: 5%;
             animation: glowPulse 8s ease-in-out infinite reverse;

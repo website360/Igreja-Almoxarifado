@@ -36,6 +36,7 @@ if ($isEdit) {
 }
 
 $ministerios = $db->fetchAll("SELECT id, nome FROM ministerios WHERE ativo = 1 ORDER BY nome");
+$unidades = $db->fetchAll("SELECT id, nome FROM unidades WHERE ativo = 1 ORDER BY nome");
 $roles = $db->fetchAll("SELECT id, name, display_name FROM roles ORDER BY id");
 
 // Papéis atuais do usuário
@@ -61,6 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'cpf' => cleanPhone($_POST['cpf'] ?? ''),
             'cargo' => $_POST['cargo'] ?? 'membro',
             'ministerio_id' => !empty($_POST['ministerio_id']) ? intval($_POST['ministerio_id']) : null,
+            'unidade_id' => !empty($_POST['unidade_id']) ? intval($_POST['unidade_id']) : null,
             'status' => $_POST['status'] ?? 'ativo',
             'data_entrada' => $_POST['data_entrada'] ?: null,
             'data_nascimento' => $_POST['data_nascimento'] ?: null,
@@ -399,6 +401,18 @@ include BASE_PATH . 'includes/header.php';
                                 <?php foreach (MEMBER_POSITIONS as $key => $label): ?>
                                 <option value="<?= $key ?>" <?= ($pessoa['cargo'] ?? $_POST['cargo'] ?? 'membro') === $key ? 'selected' : '' ?>>
                                     <?= $label ?>
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Unidade</label>
+                            <select name="unidade_id" class="form-control">
+                                <option value="">Selecione...</option>
+                                <?php foreach ($unidades as $unidade): ?>
+                                <option value="<?= $unidade['id'] ?>" <?= ($pessoa['unidade_id'] ?? $_POST['unidade_id'] ?? '') == $unidade['id'] ? 'selected' : '' ?>>
+                                    <?= sanitize($unidade['nome']) ?>
                                 </option>
                                 <?php endforeach; ?>
                             </select>

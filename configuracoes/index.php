@@ -147,6 +147,7 @@ include BASE_PATH . 'includes/header.php';
 
 <div class="tabs mb-3">
     <button class="tab-link active" data-tab="tab-geral">Geral</button>
+    <button class="tab-link" data-tab="tab-unidades">Unidades</button>
     <button class="tab-link" data-tab="tab-ministerios">Ministérios</button>
     <button class="tab-link" data-tab="tab-justificativas">Justificativas</button>
     <button class="tab-link" data-tab="tab-integracoes">Integrações</button>
@@ -197,6 +198,18 @@ include BASE_PATH . 'includes/header.php';
         </div>
         <?php endif; ?>
     </form>
+</div>
+
+<!-- Tab Unidades -->
+<div id="tab-unidades" class="tab-content">
+    <div class="card">
+        <div class="card-body">
+            <p class="mb-3">Gerencie as unidades da igreja. Cada pessoa pode ser associada a uma unidade específica.</p>
+            <a href="<?= url('/configuracoes/unidades.php') ?>" class="btn btn-primary">
+                <i data-lucide="map-pin"></i> Gerenciar Unidades
+            </a>
+        </div>
+    </div>
 </div>
 
 <!-- Tab Justificativas -->

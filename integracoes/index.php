@@ -178,6 +178,46 @@ include BASE_PATH . 'includes/header.php';
     </div>
 </div>
 
+<!-- Teste de Envio -->
+<?php if ($whatsappIntegration && $whatsappIntegration['ativo'] && can('integracoes', 'manage_settings')): ?>
+<div class="card mt-3">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i data-lucide="send"></i>
+            Testar Envio de Mensagem
+        </h3>
+    </div>
+    <div class="card-body">
+        <p class="text-muted mb-3">Envie uma mensagem de teste para verificar se a integração está funcionando corretamente.</p>
+        
+        <form id="formTesteEnvio" onsubmit="enviarMensagemTeste(event)">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label required">Número de Telefone (com DDD)</label>
+                    <input type="text" id="testPhone" class="form-control" 
+                           placeholder="Ex: 11999999999" required
+                           pattern="[0-9]{10,11}"
+                           title="Digite apenas números (DDD + telefone)">
+                    <small class="text-muted">Digite apenas números, sem espaços ou caracteres especiais</small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label required">Mensagem</label>
+                    <textarea id="testMessage" class="form-control" rows="4" required
+                              placeholder="Digite a mensagem de teste...">Olá! Esta é uma mensagem de teste do sistema da igreja. Se você recebeu esta mensagem, a integração está funcionando corretamente! 🙏</textarea>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" id="btnEnviarTeste">
+                <i data-lucide="send"></i> Enviar Mensagem de Teste
+            </button>
+        </form>
+        
+        <div id="testeResultado" class="mt-3" style="display: none;"></div>
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- Log de Mensagens -->
 <div class="card mt-3">
     <div class="card-header">
@@ -227,6 +267,101 @@ include BASE_PATH . 'includes/header.php';
 </div>
 
 <script>
+function enviarMensagemTeste(event) {
+    event.preventDefault();
+    
+    const phone = document.getElementById('testPhone').value;
+    const message = document.getElementById('testMessage').value;
+    const btnEnviar = document.getElementById('btnEnviarTeste');
+    const resultado = document.getElementById('testeResultado');
+    
+    // Validar telefone
+    if (!/^[0-9]{10,11}$/.test(phone)) {
+        showToast('Número de telefone inválido. Use apenas números (DDD + telefone)', 'error');
+        return;
+    }
+    
+    // Desabilitar botão
+    btnEnviar.disabled = true;
+    btnEnviar.innerHTML = '<i data-lucide="loader"></i> Enviando...';
+    lucide.createIcons();
+    
+    // Limpar resultado anterior
+    resultado.style.display = 'none';
+    
+    fetch('<?= url('/integracoes/api.php') ?>', {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': window.csrfToken 
+        },
+        body: JSON.stringify({
+            action: 'test_whatsapp',
+            phone: phone,
+            message: message
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        btnEnviar.disabled = false;
+        btnEnviar.innerHTML = '<i data-lucide="send"></i> Enviar Mensagem de Teste';
+        lucide.createIcons();
+        
+        if (data.success) {
+            resultado.innerHTML = `
+                <div class="alert alert-success">
+                    <div class="alert-content">
+                        <i data-lucide="check-circle"></i>
+                        <div>
+                            <strong>Mensagem enviada com sucesso!</strong>
+                            <p class="mb-0">A mensagem foi enviada para ${phone}. Verifique o WhatsApp do destinatário.</p>
+                            ${data.message_id ? `<small class="text-muted">ID da mensagem: ${data.message_id}</small>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            showToast('Mensagem de teste enviada!', 'success');
+        } else {
+            resultado.innerHTML = `
+                <div class="alert alert-danger">
+                    <div class="alert-content">
+                        <i data-lucide="alert-circle"></i>
+                        <div>
+                            <strong>Erro ao enviar mensagem</strong>
+                            <p class="mb-0">${data.message || 'Erro desconhecido. Verifique as configurações da API.'}</p>
+                            ${data.error ? `<small class="text-muted">Detalhes: ${data.error}</small>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            showToast(data.message || 'Erro ao enviar', 'error');
+        }
+        
+        resultado.style.display = 'block';
+        lucide.createIcons();
+    })
+    .catch(error => {
+        btnEnviar.disabled = false;
+        btnEnviar.innerHTML = '<i data-lucide="send"></i> Enviar Mensagem de Teste';
+        lucide.createIcons();
+        
+        resultado.innerHTML = `
+            <div class="alert alert-danger">
+                <div class="alert-content">
+                    <i data-lucide="alert-circle"></i>
+                    <div>
+                        <strong>Erro de conexão</strong>
+                        <p class="mb-0">Não foi possível conectar ao servidor. Tente novamente.</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        resultado.style.display = 'block';
+        lucide.createIcons();
+        showToast('Erro de conexão', 'error');
+    });
+}
+
 function testarWhatsApp() {
     const telefone = prompt('Digite o número para teste (com DDD):');
     if (!telefone) return;

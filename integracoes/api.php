@@ -62,14 +62,22 @@ switch ($action) {
 
         // Enviar via Z-API
         $phone = formatPhoneWhatsApp($phone);
-        $message = "🔔 Teste do Sistema Igreja Conectada\n\nSe você recebeu esta mensagem, a integração está funcionando corretamente!";
+        $message = $input['message'] ?? "🔔 Teste do Sistema Igreja Conectada\n\nSe você recebeu esta mensagem, a integração está funcionando corretamente!";
 
         $result = sendWhatsAppMessage($config, $phone, $message);
 
         if ($result['success']) {
-            jsonResponse(['success' => true, 'message' => 'Mensagem enviada']);
+            jsonResponse([
+                'success' => true, 
+                'message' => 'Mensagem enviada com sucesso',
+                'message_id' => $result['message_id'] ?? null
+            ]);
         } else {
-            jsonResponse(['success' => false, 'message' => $result['error']]);
+            jsonResponse([
+                'success' => false, 
+                'message' => $result['error'] ?? 'Erro ao enviar mensagem',
+                'error' => $result['error'] ?? null
+            ]);
         }
         break;
 

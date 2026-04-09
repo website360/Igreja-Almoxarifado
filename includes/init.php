@@ -58,6 +58,7 @@ if (empty($_SESSION['csrf_token'])) {
 // Carregar usuário atual se logado
 $currentUser = null;
 $userPermissions = [];
+$currentUserUnidade = null;
 
 if (isset($_SESSION['user_id'])) {
     $auth = new Auth();
@@ -65,5 +66,11 @@ if (isset($_SESSION['user_id'])) {
     if ($currentUser) {
         $permissions = new Permissions();
         $userPermissions = $permissions->getUserPermissions($currentUser['id']);
+        
+        // Carregar unidade do usuário
+        if (!empty($currentUser['unidade_id'])) {
+            $db = Database::getInstance();
+            $currentUserUnidade = $db->fetch("SELECT nome FROM unidades WHERE id = ?", [$currentUser['unidade_id']]);
+        }
     }
 }

@@ -48,7 +48,7 @@ $flash = getFlash();
                     <?php endif; ?>
                     <div class="logo-text">
                         <span class="logo-title"><?= getSetting('igreja_nome', APP_NAME) ?></span>
-                        <span class="logo-subtitle"><?= $currentUserUnidade['nome'] ?? 'Sistema de Gestão' ?></span>
+                        <span class="logo-subtitle"><?= $currentUserUnidade ? 'Unidade: ' . $currentUserUnidade['nome'] : 'Sistema de Gestão' ?></span>
                     </div>
                 </div>
                 <button class="sidebar-toggle" id="sidebarToggle">

@@ -237,9 +237,14 @@ function excluirUnidade(id, nome) {
 }
 
 // Fechar modal ao clicar fora
-document.getElementById('modalUnidade').addEventListener('click', function(e) {
-    if (e.target === this) {
-        fecharModalUnidade();
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('modalUnidade');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                fecharModalUnidade();
+            }
+        });
     }
 });
 </script>

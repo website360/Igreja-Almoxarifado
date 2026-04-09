@@ -57,7 +57,16 @@ switch ($action) {
 
         $config = $db->fetch("SELECT * FROM whatsapp_integrations WHERE ativo = 1 LIMIT 1");
         if (!$config) {
-            jsonResponse(['success' => false, 'message' => 'WhatsApp não configurado'], 400);
+            jsonResponse(['success' => false, 'message' => 'WhatsApp não configurado ou inativo'], 400);
+        }
+
+        // Validar configurações
+        if (empty($config['instance_id']) || empty($config['token'])) {
+            jsonResponse([
+                'success' => false, 
+                'message' => 'Configuração incompleta',
+                'error' => 'Instance ID ou Token não configurados'
+            ], 400);
         }
 
         // Enviar via Z-API
@@ -70,13 +79,16 @@ switch ($action) {
             jsonResponse([
                 'success' => true, 
                 'message' => 'Mensagem enviada com sucesso',
-                'message_id' => $result['message_id'] ?? null
+                'message_id' => $result['message_id'] ?? null,
+                'phone' => $phone
             ]);
         } else {
             jsonResponse([
                 'success' => false, 
                 'message' => $result['error'] ?? 'Erro ao enviar mensagem',
-                'error' => $result['error'] ?? null
+                'error' => $result['error'] ?? 'Erro desconhecido',
+                'http_code' => $result['http_code'] ?? null,
+                'phone' => $phone
             ]);
         }
         break;
@@ -239,18 +251,41 @@ function sendWhatsAppMessage(array $config, string $phone, string $message): arr
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $error = curl_error($ch);
+    $curlError = curl_error($ch);
     curl_close($ch);
 
-    if ($error) {
-        return ['success' => false, 'error' => $error];
+    if ($curlError) {
+        return ['success' => false, 'error' => 'Erro de conexão: ' . $curlError];
+    }
+
+    if (!$response) {
+        return ['success' => false, 'error' => 'Resposta vazia da API'];
     }
 
     $result = json_decode($response, true);
 
     if ($httpCode >= 200 && $httpCode < 300) {
-        return ['success' => true, 'data' => $result];
+        return [
+            'success' => true, 
+            'data' => $result,
+            'message_id' => $result['messageId'] ?? null
+        ];
     }
 
-    return ['success' => false, 'error' => $result['message'] ?? 'Erro desconhecido'];
+    // Erro da API
+    $errorMsg = 'Erro ao enviar mensagem';
+    if (isset($result['message'])) {
+        $errorMsg = $result['message'];
+    } elseif (isset($result['error'])) {
+        $errorMsg = $result['error'];
+    } elseif ($httpCode) {
+        $errorMsg = "HTTP {$httpCode}: " . ($response ?: 'Sem resposta');
+    }
+
+    return [
+        'success' => false, 
+        'error' => $errorMsg,
+        'http_code' => $httpCode,
+        'response' => $result
+    ];
 }

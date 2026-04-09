@@ -88,6 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && can('configuracoes', 'manage_settin
                 ]);
                 $success = 'Ministério criado!';
                 $ministerios = $db->fetchAll("SELECT * FROM ministerios ORDER BY nome");
+                redirect('/configuracoes?tab=tab-ministerios');
             }
 
         } elseif ($action === 'ministerio_excluir') {
@@ -95,6 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && can('configuracoes', 'manage_settin
             $db->delete('ministerios', 'id = ?', [$id]);
             $success = 'Ministério excluído!';
             $ministerios = $db->fetchAll("SELECT * FROM ministerios ORDER BY nome");
+            redirect('/configuracoes?tab=tab-ministerios');
 
         } elseif ($action === 'unidade_criar') {
             $nome = trim($_POST['unidade_nome'] ?? '');
@@ -110,6 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && can('configuracoes', 'manage_settin
                 ]);
                 $success = 'Unidade criada!';
                 $unidades = $db->fetchAll("SELECT * FROM unidades ORDER BY nome");
+                redirect('/configuracoes?tab=tab-unidades');
             }
 
         } elseif ($action === 'unidade_excluir') {
@@ -117,6 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && can('configuracoes', 'manage_settin
             $db->delete('unidades', 'id = ?', [$id]);
             $success = 'Unidade excluída!';
             $unidades = $db->fetchAll("SELECT * FROM unidades ORDER BY nome");
+            redirect('/configuracoes?tab=tab-unidades');
 
         } elseif ($action === 'justificativa_criar') {
             $nome = trim($_POST['justificativa_nome'] ?? '');
@@ -131,6 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && can('configuracoes', 'manage_settin
                 ]);
                 $success = 'Motivo de justificativa criado!';
                 $justificativas = $db->fetchAll("SELECT * FROM justification_reasons ORDER BY nome");
+                redirect('/configuracoes?tab=tab-justificativas');
             }
 
         } elseif ($action === 'justificativa_excluir') {
@@ -138,6 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && can('configuracoes', 'manage_settin
             $db->delete('justification_reasons', 'id = ?', [$id]);
             $success = 'Motivo de justificativa excluído!';
             $justificativas = $db->fetchAll("SELECT * FROM justification_reasons ORDER BY nome");
+            redirect('/configuracoes?tab=tab-justificativas');
         }
     }
 }
@@ -531,6 +537,27 @@ function excluirJustificativa(id, nome) {
         }
     });
 }
+
+// Restaurar aba ativa após reload
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const activeTab = urlParams.get('tab');
+    
+    if (activeTab) {
+        // Desativar todas as abas
+        document.querySelectorAll('.tab-link').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        
+        // Ativar a aba correta
+        const tabButton = document.querySelector(`[data-tab="${activeTab}"]`);
+        const tabContent = document.getElementById(activeTab);
+        
+        if (tabButton && tabContent) {
+            tabButton.classList.add('active');
+            tabContent.classList.add('active');
+        }
+    }
+});
 </script>
 
 <?php include BASE_PATH . 'includes/footer.php'; ?>

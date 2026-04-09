@@ -68,6 +68,14 @@ switch ($action) {
                 'error' => 'Instance ID ou Token não configurados'
             ], 400);
         }
+        
+        if (empty($config['api_key'])) {
+            jsonResponse([
+                'success' => false, 
+                'message' => 'Client-Token não configurado',
+                'error' => 'Preencha o campo "API Key (Client Token)" nas configurações do WhatsApp'
+            ], 400);
+        }
 
         // Enviar via Z-API
         $phone = formatPhoneWhatsApp($phone);

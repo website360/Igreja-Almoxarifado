@@ -199,12 +199,27 @@ require_once BASE_PATH . 'includes/header.php';
 
 <script>
 function abrirModalUnidade() {
-    document.getElementById('modalTitle').textContent = 'Nova Unidade';
-    document.getElementById('formAction').value = 'create';
-    document.getElementById('formUnidade').reset();
-    document.getElementById('unidadeId').value = '';
-    document.getElementById('unidadeAtivo').checked = true;
-    document.getElementById('modalUnidade').style.display = 'flex';
+    console.log('abrirModalUnidade chamada');
+    const modal = document.getElementById('modalUnidade');
+    const title = document.getElementById('modalTitle');
+    const form = document.getElementById('formUnidade');
+    const action = document.getElementById('formAction');
+    const id = document.getElementById('unidadeId');
+    const ativo = document.getElementById('unidadeAtivo');
+    
+    if (!modal) {
+        console.error('Modal não encontrado');
+        alert('Erro: Modal não encontrado. Recarregue a página.');
+        return;
+    }
+    
+    title.textContent = 'Nova Unidade';
+    action.value = 'create';
+    form.reset();
+    id.value = '';
+    ativo.checked = true;
+    modal.style.display = 'flex';
+    console.log('Modal aberto');
 }
 
 function editarUnidade(unidade) {

@@ -21,6 +21,9 @@ foreach ($settingsRows as $row) {
 // Ministérios
 $ministerios = $db->fetchAll("SELECT * FROM ministerios ORDER BY nome");
 
+// Unidades
+$unidades = $db->fetchAll("SELECT * FROM unidades ORDER BY nome");
+
 // Motivos de Justificativas
 $justificativas = $db->fetchAll("SELECT * FROM justification_reasons ORDER BY nome");
 
@@ -92,6 +95,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && can('configuracoes', 'manage_settin
             $db->delete('ministerios', 'id = ?', [$id]);
             $success = 'Ministério excluído!';
             $ministerios = $db->fetchAll("SELECT * FROM ministerios ORDER BY nome");
+
+        } elseif ($action === 'unidade_criar') {
+            $nome = trim($_POST['unidade_nome'] ?? '');
+            $descricao = trim($_POST['unidade_descricao'] ?? '');
+            
+            if (empty($nome)) {
+                $errors[] = 'Nome da unidade é obrigatório.';
+            } else {
+                $db->insert('unidades', [
+                    'nome' => $nome,
+                    'descricao' => $descricao,
+                    'ativo' => 1
+                ]);
+                $success = 'Unidade criada!';
+                $unidades = $db->fetchAll("SELECT * FROM unidades ORDER BY nome");
+            }
+
+        } elseif ($action === 'unidade_excluir') {
+            $id = intval($_POST['unidade_id'] ?? 0);
+            $db->delete('unidades', 'id = ?', [$id]);
+            $success = 'Unidade excluída!';
+            $unidades = $db->fetchAll("SELECT * FROM unidades ORDER BY nome");
 
         } elseif ($action === 'justificativa_criar') {
             $nome = trim($_POST['justificativa_nome'] ?? '');
@@ -202,13 +227,66 @@ include BASE_PATH . 'includes/header.php';
 
 <!-- Tab Unidades -->
 <div id="tab-unidades" class="tab-content">
-    <div class="card">
-        <div class="card-body">
-            <p class="mb-3">Gerencie as unidades da igreja. Cada pessoa pode ser associada a uma unidade específica.</p>
-            <a href="<?= url('/configuracoes/unidades.php') ?>" class="btn btn-primary">
-                <i data-lucide="map-pin"></i> Gerenciar Unidades
-            </a>
+    <div class="grid grid-2" style="gap: 24px;">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Unidades Cadastradas</h3>
+            </div>
+            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                <?php if (empty($unidades)): ?>
+                <p class="text-muted">Nenhuma unidade cadastrada.</p>
+                <?php else: ?>
+                    <?php foreach ($unidades as $unidade): ?>
+                    <div class="d-flex justify-between align-center mb-2" style="padding: 12px; background: var(--gray-50); border-radius: var(--border-radius);">
+                        <div>
+                            <strong><?= sanitize($unidade['nome']) ?></strong>
+                            <?= $unidade['ativo'] ? '' : '<span class="badge badge-secondary">Inativa</span>' ?>
+                            <?php if ($unidade['descricao']): ?>
+                            <br><small class="text-muted"><?= sanitize($unidade['descricao']) ?></small>
+                            <?php endif; ?>
+                        </div>
+                        <?php if (can('configuracoes', 'manage_settings')): ?>
+                        <form method="POST" style="display: inline;" id="form-excluir-unidade-<?= $unidade['id'] ?>">
+                            <?= csrfField() ?>
+                            <input type="hidden" name="action" value="unidade_excluir">
+                            <input type="hidden" name="unidade_id" value="<?= $unidade['id'] ?>">
+                            <button type="button" class="btn btn-icon btn-sm btn-outline-danger" 
+                                    onclick="excluirUnidade(<?= $unidade['id'] ?>, '<?= sanitize($unidade['nome']) ?>')">
+                                <i data-lucide="trash-2"></i>
+                            </button>
+                        </form>
+                        <?php endif; ?>
+                    </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
         </div>
+
+        <?php if (can('configuracoes', 'manage_settings')): ?>
+        <form method="POST" class="card">
+            <?= csrfField() ?>
+            <input type="hidden" name="action" value="unidade_criar">
+            
+            <div class="card-header">
+                <h3 class="card-title">Nova Unidade</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="form-label required">Nome</label>
+                    <input type="text" name="unidade_nome" class="form-control" placeholder="Ex: Sede, Congregação Centro..." required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Descrição</label>
+                    <textarea name="unidade_descricao" class="form-control" rows="2" placeholder="Descrição opcional da unidade"></textarea>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary">
+                    <i data-lucide="plus"></i> Criar Unidade
+                </button>
+            </div>
+        </form>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -427,6 +505,16 @@ function excluirMinisterio(id, nome) {
         confirmText: 'Excluir',
         onConfirm: () => {
             document.getElementById('form-excluir-ministerio-' + id).submit();
+        }
+    });
+}
+
+function excluirUnidade(id, nome) {
+    showConfirm({
+        title: 'Excluir Unidade',
+        message: `Tem certeza que deseja excluir a unidade "${nome}"?`,
+        onConfirm: () => {
+            document.getElementById('form-excluir-unidade-' + id).submit();
         }
     });
 }

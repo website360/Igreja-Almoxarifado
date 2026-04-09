@@ -219,7 +219,9 @@ function abrirModalUnidade() {
     id.value = '';
     ativo.checked = true;
     modal.style.display = 'flex';
-    console.log('Modal aberto');
+    modal.style.visibility = 'visible';
+    modal.style.opacity = '1';
+    console.log('Modal aberto', 'display:', modal.style.display, 'z-index:', window.getComputedStyle(modal).zIndex);
 }
 
 function editarUnidade(unidade) {
@@ -292,9 +294,13 @@ document.addEventListener('DOMContentLoaded', function() {
     width: 100%;
     height: 100%;
     background: rgba(0,0,0,0.5);
-    z-index: 1000;
+    z-index: 9999 !important;
     align-items: center;
     justify-content: center;
+}
+
+.modal[style*="display: flex"] {
+    display: flex !important;
 }
 
 .modal-content {

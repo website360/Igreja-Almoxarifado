@@ -69,9 +69,19 @@ function setFlash(string $type, string $message): void {
 }
 
 /**
+ * Verifica se existe mensagem flash
+ */
+function hasFlash(): bool {
+    return isset($_SESSION['flash']);
+}
+
+/**
  * Obtém e limpa mensagem flash
  */
-function getFlash(): ?array {
+function getFlash(string $key = null): mixed {
+    if ($key) {
+        return $_SESSION['flash'][$key] ?? null;
+    }
     $flash = $_SESSION['flash'] ?? null;
     unset($_SESSION['flash']);
     return $flash;

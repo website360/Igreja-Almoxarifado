@@ -117,10 +117,18 @@ define('JUSTIFICATION_STATUS', [
 
 // Cargos
 define('MEMBER_POSITIONS', [
-    'visitante' => 'Visitante',
-    'membro' => 'Membro',
-    'lider' => 'Líder',
-    'pastor' => 'Pastor'
+    'bispo' => 'Bispo',
+    'pastor' => 'Pastor',
+    'missionaria' => 'Missionária',
+    'obreiro' => 'Obreiro',
+    'candidato_obreiro' => 'Candidato a Obreiro',
+    'colaborador' => 'Colaborador',
+    'gideao' => 'Gideão',
+    'conselheiro_sja' => 'Conselheiro SJA',
+    'conselheiro_gta' => 'Conselheiro GTA',
+    'jovem' => 'Jovem',
+    'adolescente' => 'Adolescente',
+    'tia_min_infantil' => 'Tia Min. Infantil'
 ]);
 
 // Tipos de evento

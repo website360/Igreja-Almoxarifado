@@ -116,7 +116,11 @@ include BASE_PATH . 'includes/header.php';
                     <label class="form-label">API Key (Client Token)</label>
                     <input type="password" name="api_key" class="form-control"
                            value="<?= $whatsappIntegration['api_key'] ?? '' ?>"
-                           placeholder="Client Token (Security)">
+                           placeholder="Ex: A1B2C3D4E5F6...">
+                    <small class="text-muted">
+                        <strong>Atenção:</strong> Cole apenas o Client Token (Security Token) da Z-API, 
+                        NÃO cole a URL completa. Exemplo: A1B2C3D4E5F6G7H8I9J0
+                    </small>
                 </div>
                 
                 <div class="form-check mb-2">
@@ -125,14 +129,9 @@ include BASE_PATH . 'includes/header.php';
                     <label for="whatsappAtivo" class="form-check-label">Integração ativa</label>
                 </div>
                 
-                <div class="d-flex gap-1">
-                    <button type="submit" class="btn btn-primary">
-                        <i data-lucide="save"></i> Salvar
-                    </button>
-                    <button type="button" class="btn btn-secondary" onclick="testarWhatsApp()">
-                        <i data-lucide="send"></i> Testar
-                    </button>
-                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i data-lucide="save"></i> Salvar Configurações
+                </button>
             </form>
             <?php else: ?>
             <p class="text-muted">Você não tem permissão para editar as configurações.</p>

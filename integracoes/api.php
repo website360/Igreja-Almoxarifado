@@ -19,11 +19,13 @@ switch ($action) {
     case 'save_whatsapp':
         requirePermission('integracoes', 'manage_settings');
         
+        $apiKey = trim($_POST['api_key'] ?? $input['api_key'] ?? '');
+        
         $data = [
             'provider' => 'zapi',
             'instance_id' => trim($_POST['instance_id'] ?? $input['instance_id'] ?? ''),
             'token' => trim($_POST['token'] ?? $input['token'] ?? ''),
-            'api_key' => trim($_POST['api_key'] ?? $input['api_key'] ?? ''),
+            'api_key' => $apiKey,
             'ativo' => isset($_POST['ativo']) || isset($input['ativo']) ? 1 : 0,
             'updated_at' => date('Y-m-d H:i:s')
         ];
@@ -42,7 +44,11 @@ switch ($action) {
         if (isAjaxRequest()) {
             jsonResponse(['success' => true, 'message' => 'Configurações salvas']);
         } else {
-            setFlash('success', 'Configurações do WhatsApp salvas!');
+            $flashMsg = 'Configurações do WhatsApp salvas!';
+            if (empty($apiKey)) {
+                $flashMsg .= ' (Atenção: Client Token está vazio!)';
+            }
+            setFlash('success', $flashMsg);
             redirect('/integracoes');
         }
         break;

@@ -100,26 +100,25 @@ include BASE_PATH . 'includes/header.php';
                 
                 <div class="form-group">
                     <label class="form-label">Instance ID</label>
-                    <input type="text" name="instance_id" class="form-control"
+                    <input type="text" name="instance_id" class="form-control" autocomplete="off"
                            value="<?= sanitize($whatsappIntegration['instance_id'] ?? '') ?>"
                            placeholder="Seu Instance ID do Z-API">
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Token</label>
-                    <input type="password" name="token" class="form-control"
-                           value="<?= $whatsappIntegration['token'] ?? '' ?>"
+                    <input type="text" name="token" class="form-control" autocomplete="off"
+                           value="<?= sanitize($whatsappIntegration['token'] ?? '') ?>"
                            placeholder="Seu Token do Z-API">
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">API Key (Client Token)</label>
-                    <input type="password" name="api_key" class="form-control"
-                           value="<?= $whatsappIntegration['api_key'] ?? '' ?>"
-                           placeholder="Ex: A1B2C3D4E5F6...">
+                    <label class="form-label">Client Token (Security)</label>
+                    <input type="text" name="api_key" class="form-control" autocomplete="off"
+                           value="<?= sanitize($whatsappIntegration['api_key'] ?? '') ?>"
+                           placeholder="Cole aqui o Client Token da Z-API">
                     <small class="text-muted">
-                        <strong>Atenção:</strong> Cole apenas o Client Token (Security Token) da Z-API, 
-                        NÃO cole a URL completa. Exemplo: A1B2C3D4E5F6G7H8I9J0
+                        Encontre em: Painel Z-API → sua instância → aba Security → Client Token
                     </small>
                 </div>
                 

@@ -122,6 +122,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && can('configuracoes', 'manage_settin
             $unidades = $db->fetchAll("SELECT * FROM unidades ORDER BY nome");
             redirect('/configuracoes?tab=tab-unidades');
 
+        } elseif ($action === 'evolution_api') {
+            $apiUrl = trim($_POST['evolution_api_url'] ?? '');
+            $apiKey = trim($_POST['evolution_api_key'] ?? '');
+            
+            if (empty($apiUrl) || empty($apiKey)) {
+                $errors[] = 'URL e API Key da Evolution são obrigatórios.';
+            } else {
+                // Salvar URL
+                $existing = $db->fetch("SELECT id FROM app_settings WHERE setting_key = 'evolution_api_url'");
+                if ($existing) {
+                    $db->update('app_settings', ['setting_value' => $apiUrl], "setting_key = 'evolution_api_url'");
+                } else {
+                    $db->insert('app_settings', ['setting_key' => 'evolution_api_url', 'setting_value' => $apiUrl, 'setting_type' => 'string']);
+                }
+                
+                // Salvar API Key
+                $existing = $db->fetch("SELECT id FROM app_settings WHERE setting_key = 'evolution_api_key'");
+                if ($existing) {
+                    $db->update('app_settings', ['setting_value' => $apiKey], "setting_key = 'evolution_api_key'");
+                } else {
+                    $db->insert('app_settings', ['setting_key' => 'evolution_api_key', 'setting_value' => $apiKey, 'setting_type' => 'string']);
+                }
+                
+                Audit::log('settings_updated', 'app_settings', null, ['evolution_api_configured' => true]);
+                $success = 'Configurações da Evolution API salvas com sucesso!';
+                
+                // Recarregar configurações
+                $settingsRows = $db->fetchAll("SELECT * FROM app_settings");
+                foreach ($settingsRows as $row) {
+                    $settings[$row['setting_key']] = $row['setting_value'];
+                }
+                
+                redirect('/configuracoes?tab=tab-evolution');
+            }
+
         } elseif ($action === 'justificativa_criar') {
             $nome = trim($_POST['justificativa_nome'] ?? '');
             $descricao = trim($_POST['justificativa_descricao'] ?? '');
@@ -178,6 +213,7 @@ include BASE_PATH . 'includes/header.php';
 
 <div class="tabs mb-3">
     <button class="tab-link active" data-tab="tab-geral">Geral</button>
+    <button class="tab-link" data-tab="tab-evolution">Evolution API</button>
     <button class="tab-link" data-tab="tab-unidades">Unidades</button>
     <button class="tab-link" data-tab="tab-ministerios">Ministérios</button>
     <button class="tab-link" data-tab="tab-justificativas">Justificativas</button>
@@ -229,6 +265,117 @@ include BASE_PATH . 'includes/header.php';
         </div>
         <?php endif; ?>
     </form>
+</div>
+
+<!-- Tab Evolution API -->
+<div id="tab-evolution" class="tab-content">
+    <form method="POST" class="card">
+        <?= csrfField() ?>
+        <input type="hidden" name="action" value="evolution_api">
+        
+        <div class="card-header">
+            <h3 class="card-title">
+                <i data-lucide="server"></i>
+                Configuração da Evolution API
+            </h3>
+        </div>
+        
+        <div class="card-body">
+            <div class="alert alert-info mb-3">
+                <div class="alert-content">
+                    <i data-lucide="info"></i>
+                    <div>
+                        <strong>Configuração para Administradores</strong>
+                        <p class="mb-0">Configure aqui a URL e API Key da sua Evolution API. Após configurar, os usuários poderão criar instâncias WhatsApp diretamente no sistema sem precisar de credenciais.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <?php if (can('configuracoes', 'manage_settings')): ?>
+            <div class="form-group">
+                <label class="form-label required">URL da Evolution API</label>
+                <input type="url" name="evolution_api_url" class="form-control" 
+                       value="<?= sanitize($settings['evolution_api_url'] ?? '') ?>"
+                       placeholder="https://seu-servidor.com:8080"
+                       required>
+                <small class="text-muted">
+                    URL completa da sua Evolution API (incluindo porta se necessário).<br>
+                    Exemplo: https://evolution.seudominio.com.br ou http://seu-ip:8080
+                </small>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label required">API Key Global</label>
+                <input type="text" name="evolution_api_key" class="form-control" 
+                       value="<?= sanitize($settings['evolution_api_key'] ?? '') ?>"
+                       placeholder="SUA_API_KEY_GLOBAL"
+                       required>
+                <small class="text-muted">
+                    API Key global configurada na sua Evolution API (variável AUTHENTICATION_API_KEY)
+                </small>
+            </div>
+            
+            <div style="padding: 16px; background: var(--gray-50); border-radius: var(--border-radius); margin-bottom: 16px;">
+                <h4 style="margin: 0 0 12px 0; font-size: 0.95rem;">
+                    <i data-lucide="help-circle" style="width: 16px; height: 16px;"></i>
+                    Como encontrar essas informações?
+                </h4>
+                <ul style="margin: 0; padding-left: 20px; font-size: 0.9rem;">
+                    <li><strong>URL:</strong> Endereço onde sua Evolution API está rodando</li>
+                    <li><strong>API Key:</strong> Valor definido na variável de ambiente <code>AUTHENTICATION_API_KEY</code> ao instalar a Evolution API</li>
+                    <li>Se você instalou via Docker, verifique o comando <code>docker run</code> ou arquivo <code>docker-compose.yml</code></li>
+                </ul>
+            </div>
+            
+            <div style="padding: 16px; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: var(--border-radius); margin-bottom: 16px;">
+                <strong style="color: #92400e;">⚠️ Importante:</strong>
+                <p style="margin: 8px 0 0 0; color: #92400e; font-size: 0.9rem;">
+                    Essas credenciais são sensíveis e permitem criar instâncias WhatsApp. Mantenha-as seguras e não compartilhe.
+                </p>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">
+                <i data-lucide="save"></i> Salvar Configurações da Evolution API
+            </button>
+            <?php else: ?>
+            <p class="text-muted">Você não tem permissão para editar as configurações.</p>
+            <?php endif; ?>
+        </div>
+    </form>
+    
+    <?php if (!empty($settings['evolution_api_url'])): ?>
+    <div class="card mt-3">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i data-lucide="check-circle" style="color: var(--success);"></i>
+                Status da Configuração
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="d-flex align-center mb-2" style="gap: 12px; padding: 12px; background: var(--gray-50); border-radius: var(--border-radius);">
+                <i data-lucide="server" style="color: var(--success); flex-shrink: 0;"></i>
+                <div style="flex: 1;">
+                    <strong>URL Configurada</strong>
+                    <br><code style="font-size: 0.85rem;"><?= sanitize($settings['evolution_api_url']) ?></code>
+                </div>
+            </div>
+            <div class="d-flex align-center" style="gap: 12px; padding: 12px; background: var(--gray-50); border-radius: var(--border-radius);">
+                <i data-lucide="key" style="color: var(--success); flex-shrink: 0;"></i>
+                <div style="flex: 1;">
+                    <strong>API Key Configurada</strong>
+                    <br><code style="font-size: 0.85rem;"><?= str_repeat('•', 20) . substr($settings['evolution_api_key'], -4) ?></code>
+                </div>
+            </div>
+            <div class="mt-3" style="padding: 12px; background: #dcfce7; border-radius: var(--border-radius);">
+                <i data-lucide="check-circle" style="color: #16a34a; width: 16px; height: 16px;"></i>
+                <strong style="color: #16a34a;">Evolution API configurada!</strong>
+                <p style="margin: 4px 0 0 0; color: #166534; font-size: 0.9rem;">
+                    Os usuários já podem criar instâncias WhatsApp em <a href="<?= url('/integracoes') ?>">Integrações</a>.
+                </p>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
 </div>
 
 <!-- Tab Unidades -->

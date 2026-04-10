@@ -9,8 +9,17 @@ class EvolutionAPI {
     private string $apiKey;
     
     public function __construct() {
-        $this->baseUrl = rtrim(EVOLUTION_API_URL, '/');
-        $this->apiKey = EVOLUTION_API_KEY;
+        // Buscar configurações do banco de dados
+        $db = Database::getInstance();
+        $urlSetting = $db->fetch("SELECT setting_value FROM app_settings WHERE setting_key = 'evolution_api_url'");
+        $keySetting = $db->fetch("SELECT setting_value FROM app_settings WHERE setting_key = 'evolution_api_key'");
+        
+        $this->baseUrl = rtrim($urlSetting['setting_value'] ?? EVOLUTION_API_URL ?? '', '/');
+        $this->apiKey = $keySetting['setting_value'] ?? EVOLUTION_API_KEY ?? '';
+        
+        if (empty($this->baseUrl) || empty($this->apiKey)) {
+            throw new Exception('Evolution API não configurada. Configure em Configurações > API Evolution.');
+        }
     }
     
     /**

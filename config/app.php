@@ -56,6 +56,11 @@ define('MODULES', [
         'icon' => 'bar-chart-2',
         'route' => '/relatorios'
     ],
+    'integracoes' => [
+        'name' => 'Integrações',
+        'icon' => 'message-circle',
+        'route' => '/integracoes'
+    ],
     'configuracoes' => [
         'name' => 'Configurações',
         'icon' => 'settings',

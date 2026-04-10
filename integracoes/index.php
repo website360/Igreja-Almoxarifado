@@ -79,37 +79,42 @@ include BASE_PATH . 'includes/header.php';
     </div>
 </div>
 
-<?php if (can('integracoes', 'manage_settings')): ?>
 <!-- Seletor de Provedor -->
 <div class="card mb-3">
-    <div class="card-header">
-        <h3 class="card-title">
-            <i data-lucide="settings"></i>
-            Escolha o Provedor WhatsApp
-        </h3>
-    </div>
-    <div class="card-body">
-        <div class="d-flex gap-2" style="gap: 16px;">
-            <label class="provider-card <?= $currentProvider === 'evolution' ? 'active' : '' ?>" onclick="selecionarProvedor('evolution')" style="flex: 1; cursor: pointer; padding: 20px; border: 2px solid <?= $currentProvider === 'evolution' ? 'var(--primary)' : 'var(--gray-200)' ?>; border-radius: var(--border-radius); text-align: center; transition: all 0.2s;">
+    <div class="card-body" style="padding: 24px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+            <h3 style="margin: 0 0 8px 0; font-size: 1.5rem;">
+                <i data-lucide="message-circle" style="color: #25D366;"></i>
+                Conecte seu WhatsApp
+            </h3>
+            <p class="text-muted" style="margin: 0;">Escolha como deseja conectar o WhatsApp ao sistema</p>
+        </div>
+        
+        <div class="d-flex gap-2" style="gap: 20px; max-width: 800px; margin: 0 auto;">
+            <label class="provider-card <?= $currentProvider === 'evolution' ? 'active' : '' ?>" onclick="selecionarProvedor('evolution')" style="flex: 1; cursor: pointer; padding: 24px; border: 3px solid <?= $currentProvider === 'evolution' ? '#10b981' : 'var(--gray-200)' ?>; border-radius: 12px; text-align: center; transition: all 0.3s; background: <?= $currentProvider === 'evolution' ? '#f0fdf4' : 'white' ?>; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
                 <input type="radio" name="provider_select" value="evolution" <?= $currentProvider === 'evolution' ? 'checked' : '' ?> style="display: none;">
-                <div style="font-size: 2rem; margin-bottom: 8px;">🟢</div>
-                <strong style="font-size: 1.1rem;">Evolution API</strong>
-                <p class="text-muted mb-0" style="font-size: 0.85rem; margin-top: 4px;">
-                    Gratuito e integrado ao sistema.<br>
-                    Conecte escaneando o QR Code.
+                <div style="font-size: 3rem; margin-bottom: 12px;">�</div>
+                <strong style="font-size: 1.2rem; display: block; margin-bottom: 8px; color: #10b981;">Evolution API</strong>
+                <p class="text-muted mb-0" style="font-size: 0.9rem; line-height: 1.5;">
+                    ✓ Totalmente gratuito<br>
+                    ✓ Integrado ao sistema<br>
+                    ✓ Conecte com QR Code<br>
+                    ✓ Sem mensalidades
                 </p>
-                <span class="badge badge-success" style="margin-top: 8px;">Recomendado</span>
+                <span class="badge badge-success" style="margin-top: 12px; padding: 6px 12px; font-size: 0.85rem;">✨ Recomendado</span>
             </label>
             
-            <label class="provider-card <?= $currentProvider === 'zapi' ? 'active' : '' ?>" onclick="selecionarProvedor('zapi')" style="flex: 1; cursor: pointer; padding: 20px; border: 2px solid <?= $currentProvider === 'zapi' ? 'var(--primary)' : 'var(--gray-200)' ?>; border-radius: var(--border-radius); text-align: center; transition: all 0.2s;">
+            <label class="provider-card <?= $currentProvider === 'zapi' ? 'active' : '' ?>" onclick="selecionarProvedor('zapi')" style="flex: 1; cursor: pointer; padding: 24px; border: 3px solid <?= $currentProvider === 'zapi' ? '#3b82f6' : 'var(--gray-200)' ?>; border-radius: 12px; text-align: center; transition: all 0.3s; background: <?= $currentProvider === 'zapi' ? '#eff6ff' : 'white' ?>; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
                 <input type="radio" name="provider_select" value="zapi" <?= $currentProvider === 'zapi' ? 'checked' : '' ?> style="display: none;">
-                <div style="font-size: 2rem; margin-bottom: 8px;">🔵</div>
-                <strong style="font-size: 1.1rem;">Z-API</strong>
-                <p class="text-muted mb-0" style="font-size: 0.85rem; margin-top: 4px;">
-                    Serviço externo pago.<br>
-                    Requer credenciais próprias.
+                <div style="font-size: 3rem; margin-bottom: 12px;">�</div>
+                <strong style="font-size: 1.2rem; display: block; margin-bottom: 8px; color: #3b82f6;">Z-API</strong>
+                <p class="text-muted mb-0" style="font-size: 0.9rem; line-height: 1.5;">
+                    • Serviço externo<br>
+                    • Requer conta própria<br>
+                    • Planos pagos<br>
+                    • Mais recursos
                 </p>
-                <span class="badge badge-secondary" style="margin-top: 8px;">Avançado</span>
+                <span class="badge badge-primary" style="margin-top: 12px; padding: 6px 12px; font-size: 0.85rem;">Avançado</span>
             </label>
         </div>
     </div>
@@ -317,7 +322,6 @@ include BASE_PATH . 'includes/header.php';
         </div>
     </div>
 </div>
-<?php endif; ?>
 
 <!-- Templates -->
 <div class="card mt-3">
@@ -442,8 +446,14 @@ include BASE_PATH . 'includes/header.php';
 
 <style>
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-.provider-card:hover { border-color: var(--primary) !important; background: var(--gray-50); }
-.provider-card.active { border-color: var(--primary) !important; background: rgba(59,130,246,0.05); }
+.provider-card { position: relative; }
+.provider-card:hover { 
+    transform: translateY(-4px); 
+    box-shadow: 0 8px 16px rgba(0,0,0,0.12) !important;
+}
+.provider-card.active { 
+    transform: translateY(-2px);
+}
 </style>
 
 <script>
@@ -461,18 +471,19 @@ function selecionarProvedor(provider) {
     document.getElementById('panel-evolution').style.display = provider === 'evolution' ? 'block' : 'none';
     document.getElementById('panel-zapi').style.display = provider === 'zapi' ? 'block' : 'none';
     
+    // Atualizar visual dos cards
     document.querySelectorAll('.provider-card').forEach(card => {
         card.classList.remove('active');
-        card.style.borderColor = 'var(--gray-200)';
     });
-    event.currentTarget.classList.add('active');
-    event.currentTarget.style.borderColor = 'var(--primary)';
+    document.querySelectorAll('.provider-card')[provider === 'evolution' ? 0 : 1].classList.add('active');
     
     // Salvar escolha
     fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
         body: JSON.stringify({ action: 'set_provider', provider: provider })
+    }).then(() => {
+        showToast(provider === 'evolution' ? 'Evolution API selecionada' : 'Z-API selecionada', 'success');
     });
     
     currentProvider = provider;

@@ -217,7 +217,6 @@ include BASE_PATH . 'includes/header.php';
     <button class="tab-link" data-tab="tab-unidades">Unidades</button>
     <button class="tab-link" data-tab="tab-ministerios">Ministérios</button>
     <button class="tab-link" data-tab="tab-justificativas">Justificativas</button>
-    <button class="tab-link" data-tab="tab-integracoes">Integrações</button>
     <button class="tab-link" data-tab="tab-auditoria">Auditoria</button>
 </div>
 

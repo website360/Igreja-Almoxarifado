@@ -53,6 +53,172 @@ switch ($action) {
         }
         break;
 
+    // =============================================
+    // EVOLUTION API
+    // =============================================
+    case 'set_provider':
+        requirePermission('integracoes', 'manage_settings');
+        
+        $provider = $input['provider'] ?? 'evolution';
+        if (!in_array($provider, ['evolution', 'zapi'])) {
+            jsonResponse(['success' => false, 'message' => 'Provedor inválido'], 400);
+        }
+        
+        $existing = $db->fetch("SELECT id FROM whatsapp_integrations LIMIT 1");
+        if ($existing) {
+            $db->update('whatsapp_integrations', ['provider' => $provider, 'updated_at' => date('Y-m-d H:i:s')], 'id = :id', ['id' => $existing['id']]);
+        } else {
+            $db->insert('whatsapp_integrations', ['provider' => $provider, 'created_at' => date('Y-m-d H:i:s')]);
+        }
+        
+        jsonResponse(['success' => true, 'message' => 'Provedor atualizado']);
+        break;
+
+    case 'evo_create_instance':
+        requirePermission('integracoes', 'manage_settings');
+        
+        $instanceName = trim($input['instance_name'] ?? '');
+        $instanceName = preg_replace('/[^a-zA-Z0-9-]/', '', strtolower($instanceName));
+        
+        if (strlen($instanceName) < 3) {
+            jsonResponse(['success' => false, 'message' => 'Nome da instância deve ter pelo menos 3 caracteres'], 400);
+        }
+        
+        $evo = new EvolutionAPI();
+        $result = $evo->createInstance($instanceName);
+        
+        if ($result['success']) {
+            // Salvar instância no banco
+            $existing = $db->fetch("SELECT id FROM whatsapp_integrations LIMIT 1");
+            $data = [
+                'provider' => 'evolution',
+                'instance_name' => $instanceName,
+                'instance_id' => $result['data']['instanceId'] ?? $instanceName,
+                'token' => $result['data']['hash'] ?? '',
+                'ativo' => 1,
+                'connection_status' => 'connecting',
+                'updated_at' => date('Y-m-d H:i:s')
+            ];
+            
+            if ($existing) {
+                $db->update('whatsapp_integrations', $data, 'id = :id', ['id' => $existing['id']]);
+            } else {
+                $data['created_at'] = date('Y-m-d H:i:s');
+                $db->insert('whatsapp_integrations', $data);
+            }
+            
+            Audit::log('settings_updated', 'whatsapp_integrations', null, ['action' => 'create_instance', 'instance' => $instanceName]);
+            
+            // Extrair QR code da resposta
+            $qrcode = $result['data']['qrcode']['base64'] ?? $result['data']['qrcode'] ?? null;
+            
+            jsonResponse([
+                'success' => true,
+                'message' => 'Instância criada com sucesso',
+                'instance_name' => $instanceName,
+                'qrcode' => $qrcode
+            ]);
+        } else {
+            jsonResponse([
+                'success' => false,
+                'message' => $result['error'] ?? 'Erro ao criar instância',
+                'error' => $result['error'] ?? 'Erro desconhecido'
+            ]);
+        }
+        break;
+
+    case 'evo_get_qrcode':
+        requirePermission('integracoes', 'manage_settings');
+        
+        $instanceName = trim($input['instance_name'] ?? '');
+        if (!$instanceName) {
+            jsonResponse(['success' => false, 'message' => 'Nome da instância não informado'], 400);
+        }
+        
+        $evo = new EvolutionAPI();
+        $result = $evo->getQrCode($instanceName);
+        
+        if ($result['success']) {
+            $qrcode = $result['data']['base64'] ?? $result['data']['qrcode'] ?? null;
+            jsonResponse([
+                'success' => true,
+                'qrcode' => $qrcode
+            ]);
+        } else {
+            jsonResponse([
+                'success' => false,
+                'message' => $result['error'] ?? 'Erro ao buscar QR Code'
+            ]);
+        }
+        break;
+
+    case 'evo_check_status':
+        requirePermission('integracoes', 'view');
+        
+        $instanceName = trim($input['instance_name'] ?? '');
+        if (!$instanceName) {
+            jsonResponse(['success' => false, 'message' => 'Nome da instância não informado'], 400);
+        }
+        
+        $evo = new EvolutionAPI();
+        $result = $evo->getConnectionStatus($instanceName);
+        
+        if ($result['success']) {
+            $state = $result['data']['instance']['state'] ?? $result['data']['state'] ?? 'unknown';
+            
+            // Atualizar status no banco
+            $existing = $db->fetch("SELECT id FROM whatsapp_integrations WHERE instance_name = ?", [$instanceName]);
+            if ($existing) {
+                $updateData = ['connection_status' => $state, 'updated_at' => date('Y-m-d H:i:s')];
+                if ($state === 'open' || $state === 'connected') {
+                    $updateData['ativo'] = 1;
+                }
+                $db->update('whatsapp_integrations', $updateData, 'id = :id', ['id' => $existing['id']]);
+            }
+            
+            jsonResponse([
+                'success' => true,
+                'state' => $state,
+                'phone' => $result['data']['instance']['phoneNumber'] ?? null
+            ]);
+        } else {
+            jsonResponse([
+                'success' => false,
+                'state' => 'disconnected',
+                'message' => $result['error'] ?? 'Instância não encontrada'
+            ]);
+        }
+        break;
+
+    case 'evo_logout':
+        requirePermission('integracoes', 'manage_settings');
+        
+        $instanceName = trim($input['instance_name'] ?? '');
+        if (!$instanceName) {
+            jsonResponse(['success' => false, 'message' => 'Nome da instância não informado'], 400);
+        }
+        
+        $evo = new EvolutionAPI();
+        $result = $evo->logoutInstance($instanceName);
+        
+        // Atualizar status no banco
+        $existing = $db->fetch("SELECT id FROM whatsapp_integrations WHERE instance_name = ?", [$instanceName]);
+        if ($existing) {
+            $db->update('whatsapp_integrations', [
+                'connection_status' => 'disconnected',
+                'ativo' => 0,
+                'updated_at' => date('Y-m-d H:i:s')
+            ], 'id = :id', ['id' => $existing['id']]);
+        }
+        
+        Audit::log('settings_updated', 'whatsapp_integrations', null, ['action' => 'logout', 'instance' => $instanceName]);
+        
+        jsonResponse(['success' => true, 'message' => 'WhatsApp desconectado']);
+        break;
+
+    // =============================================
+    // TESTE DE ENVIO (AMBOS PROVEDORES)
+    // =============================================
     case 'test_whatsapp':
         requirePermission('integracoes', 'send_message');
         
@@ -66,44 +232,51 @@ switch ($action) {
             jsonResponse(['success' => false, 'message' => 'WhatsApp não configurado ou inativo'], 400);
         }
 
-        // Validar configurações
-        if (empty($config['instance_id']) || empty($config['token'])) {
-            jsonResponse([
-                'success' => false, 
-                'message' => 'Configuração incompleta',
-                'error' => 'Instance ID ou Token não configurados'
-            ], 400);
-        }
-        
-        if (empty($config['api_key'])) {
-            jsonResponse([
-                'success' => false, 
-                'message' => 'Client-Token não configurado',
-                'error' => 'Preencha o campo "API Key (Client Token)" nas configurações do WhatsApp'
-            ], 400);
-        }
-
-        // Enviar via Z-API
         $phone = formatPhoneWhatsApp($phone);
         $message = $input['message'] ?? "🔔 Teste do Sistema Igreja Conectada\n\nSe você recebeu esta mensagem, a integração está funcionando corretamente!";
 
-        $result = sendWhatsAppMessage($config, $phone, $message);
-
-        if ($result['success']) {
-            jsonResponse([
-                'success' => true, 
-                'message' => 'Mensagem enviada com sucesso',
-                'message_id' => $result['message_id'] ?? null,
-                'phone' => $phone
-            ]);
+        if ($config['provider'] === 'evolution') {
+            // Enviar via Evolution API
+            $evo = new EvolutionAPI();
+            $result = $evo->sendText($config['instance_name'], $phone, $message);
+            
+            if ($result['success']) {
+                jsonResponse([
+                    'success' => true,
+                    'message' => 'Mensagem enviada com sucesso via Evolution API',
+                    'message_id' => $result['data']['key']['id'] ?? null
+                ]);
+            } else {
+                jsonResponse([
+                    'success' => false,
+                    'message' => $result['error'] ?? 'Erro ao enviar mensagem',
+                    'error' => $result['error'] ?? 'Erro desconhecido'
+                ]);
+            }
         } else {
-            jsonResponse([
-                'success' => false, 
-                'message' => $result['error'] ?? 'Erro ao enviar mensagem',
-                'error' => $result['error'] ?? 'Erro desconhecido',
-                'http_code' => $result['http_code'] ?? null,
-                'phone' => $phone
-            ]);
+            // Enviar via Z-API
+            if (empty($config['instance_id']) || empty($config['token'])) {
+                jsonResponse(['success' => false, 'message' => 'Instance ID ou Token não configurados'], 400);
+            }
+            if (empty($config['api_key'])) {
+                jsonResponse(['success' => false, 'message' => 'Client-Token não configurado'], 400);
+            }
+
+            $result = sendWhatsAppMessage($config, $phone, $message);
+
+            if ($result['success']) {
+                jsonResponse([
+                    'success' => true,
+                    'message' => 'Mensagem enviada com sucesso via Z-API',
+                    'message_id' => $result['message_id'] ?? null
+                ]);
+            } else {
+                jsonResponse([
+                    'success' => false,
+                    'message' => $result['error'] ?? 'Erro ao enviar mensagem',
+                    'error' => $result['error'] ?? 'Erro desconhecido'
+                ]);
+            }
         }
         break;
 

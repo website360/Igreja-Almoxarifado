@@ -18,6 +18,7 @@ require_once BASE_PATH . 'includes/helpers.php';
 require_once BASE_PATH . 'includes/auth.php';
 require_once BASE_PATH . 'includes/permissions.php';
 require_once BASE_PATH . 'includes/audit.php';
+require_once BASE_PATH . 'includes/EvolutionAPI.php';
 
 // Configurar exibição de erros
 if (APP_DEBUG) {

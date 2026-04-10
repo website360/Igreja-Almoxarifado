@@ -1,6 +1,6 @@
 <?php
 /**
- * Integrações - WhatsApp e Email
+ * Integrações - WhatsApp (Evolution API / Z-API)
  */
 define('BASE_PATH', dirname(__DIR__) . '/');
 require_once BASE_PATH . 'includes/init.php';
@@ -14,6 +14,7 @@ $db = Database::getInstance();
 // Buscar configurações atuais
 $whatsappIntegration = $db->fetch("SELECT * FROM whatsapp_integrations ORDER BY id DESC LIMIT 1");
 $templates = $db->fetchAll("SELECT * FROM whatsapp_templates ORDER BY nome");
+$currentProvider = $whatsappIntegration['provider'] ?? 'evolution';
 
 // Estatísticas de mensagens
 $msgStats = $db->fetch(
@@ -41,8 +42,8 @@ include BASE_PATH . 'includes/header.php';
 
 <div class="page-header">
     <div>
-        <h1 class="page-title">Integrações</h1>
-        <p class="page-subtitle">Configurações de WhatsApp e Email</p>
+        <h1 class="page-title">Integrações WhatsApp</h1>
+        <p class="page-subtitle">Conecte o WhatsApp para envio de mensagens</p>
     </div>
 </div>
 
@@ -78,101 +79,280 @@ include BASE_PATH . 'includes/header.php';
     </div>
 </div>
 
-<div class="grid grid-2" style="gap: 24px;">
-    <!-- WhatsApp -->
-    <div class="card">
-        <div class="card-header">
-            <h3 class="card-title">
-                <i data-lucide="message-circle" style="color: #25D366;"></i>
-                WhatsApp (Z-API)
-            </h3>
-            <?php if ($whatsappIntegration && $whatsappIntegration['ativo']): ?>
-            <span class="badge badge-success">Conectado</span>
-            <?php else: ?>
-            <span class="badge badge-secondary">Desconectado</span>
-            <?php endif; ?>
-        </div>
-        <div class="card-body">
-            <?php if (can('integracoes', 'manage_settings')): ?>
-            <form method="POST" action="<?= url('/integracoes/api.php') ?>" id="formWhatsApp">
-                <input type="hidden" name="action" value="save_whatsapp">
-                <?= csrfField() ?>
-                
-                <div class="form-group">
-                    <label class="form-label">Instance ID</label>
-                    <input type="text" name="instance_id" class="form-control" autocomplete="off"
-                           value="<?= sanitize($whatsappIntegration['instance_id'] ?? '') ?>"
-                           placeholder="Seu Instance ID do Z-API">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Token</label>
-                    <input type="text" name="token" class="form-control" autocomplete="off"
-                           value="<?= sanitize($whatsappIntegration['token'] ?? '') ?>"
-                           placeholder="Seu Token do Z-API">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Client Token (Security)</label>
-                    <input type="text" name="api_key" class="form-control" autocomplete="off"
-                           value="<?= sanitize($whatsappIntegration['api_key'] ?? '') ?>"
-                           placeholder="Cole aqui o Client Token da Z-API">
-                    <small class="text-muted">
-                        Encontre em: Painel Z-API → sua instância → aba Security → Client Token
-                    </small>
-                </div>
-                
-                <div class="form-check mb-2">
-                    <input type="checkbox" name="ativo" id="whatsappAtivo" class="form-check-input"
-                           <?= ($whatsappIntegration['ativo'] ?? 0) ? 'checked' : '' ?>>
-                    <label for="whatsappAtivo" class="form-check-label">Integração ativa</label>
-                </div>
-                
-                <button type="submit" class="btn btn-primary">
-                    <i data-lucide="save"></i> Salvar Configurações
-                </button>
-            </form>
-            <?php else: ?>
-            <p class="text-muted">Você não tem permissão para editar as configurações.</p>
-            <?php endif; ?>
+<?php if (can('integracoes', 'manage_settings')): ?>
+<!-- Seletor de Provedor -->
+<div class="card mb-3">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i data-lucide="settings"></i>
+            Escolha o Provedor WhatsApp
+        </h3>
+    </div>
+    <div class="card-body">
+        <div class="d-flex gap-2" style="gap: 16px;">
+            <label class="provider-card <?= $currentProvider === 'evolution' ? 'active' : '' ?>" onclick="selecionarProvedor('evolution')" style="flex: 1; cursor: pointer; padding: 20px; border: 2px solid <?= $currentProvider === 'evolution' ? 'var(--primary)' : 'var(--gray-200)' ?>; border-radius: var(--border-radius); text-align: center; transition: all 0.2s;">
+                <input type="radio" name="provider_select" value="evolution" <?= $currentProvider === 'evolution' ? 'checked' : '' ?> style="display: none;">
+                <div style="font-size: 2rem; margin-bottom: 8px;">🟢</div>
+                <strong style="font-size: 1.1rem;">Evolution API</strong>
+                <p class="text-muted mb-0" style="font-size: 0.85rem; margin-top: 4px;">
+                    Gratuito e integrado ao sistema.<br>
+                    Conecte escaneando o QR Code.
+                </p>
+                <span class="badge badge-success" style="margin-top: 8px;">Recomendado</span>
+            </label>
+            
+            <label class="provider-card <?= $currentProvider === 'zapi' ? 'active' : '' ?>" onclick="selecionarProvedor('zapi')" style="flex: 1; cursor: pointer; padding: 20px; border: 2px solid <?= $currentProvider === 'zapi' ? 'var(--primary)' : 'var(--gray-200)' ?>; border-radius: var(--border-radius); text-align: center; transition: all 0.2s;">
+                <input type="radio" name="provider_select" value="zapi" <?= $currentProvider === 'zapi' ? 'checked' : '' ?> style="display: none;">
+                <div style="font-size: 2rem; margin-bottom: 8px;">🔵</div>
+                <strong style="font-size: 1.1rem;">Z-API</strong>
+                <p class="text-muted mb-0" style="font-size: 0.85rem; margin-top: 4px;">
+                    Serviço externo pago.<br>
+                    Requer credenciais próprias.
+                </p>
+                <span class="badge badge-secondary" style="margin-top: 8px;">Avançado</span>
+            </label>
         </div>
     </div>
+</div>
 
-    <!-- Templates -->
-    <div class="card">
-        <div class="card-header">
-            <h3 class="card-title">Templates de Mensagem</h3>
-            <?php if (can('integracoes', 'manage_settings')): ?>
-            <button class="btn btn-sm btn-primary" onclick="novoTemplate()">
-                <i data-lucide="plus"></i> Novo
-            </button>
-            <?php endif; ?>
-        </div>
-        <div class="card-body" style="max-height: 400px; overflow-y: auto;">
-            <?php if (empty($templates)): ?>
-            <p class="text-muted text-center">Nenhum template cadastrado.</p>
-            <?php else: ?>
-                <?php foreach ($templates as $tpl): ?>
-                <div class="d-flex justify-between align-center mb-2" style="padding: 12px; background: var(--gray-50); border-radius: var(--border-radius);">
-                    <div>
-                        <strong><?= sanitize($tpl['nome']) ?></strong>
-                        <?= $tpl['ativo'] ? '<span class="badge badge-success">Ativo</span>' : '<span class="badge badge-secondary">Inativo</span>' ?>
-                        <br><small class="text-muted"><?= sanitize(substr($tpl['mensagem'], 0, 60)) ?>...</small>
+<!-- ============================================= -->
+<!-- EVOLUTION API -->
+<!-- ============================================= -->
+<div id="panel-evolution" style="display: <?= $currentProvider === 'evolution' ? 'block' : 'none' ?>;">
+    <div class="grid grid-2" style="gap: 24px;">
+        <!-- Conexão WhatsApp -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i data-lucide="smartphone" style="color: #25D366;"></i>
+                    Conexão WhatsApp
+                </h3>
+                <span id="evoStatusBadge" class="badge badge-secondary">Verificando...</span>
+            </div>
+            <div class="card-body">
+                <!-- Estado: Sem instância -->
+                <div id="evoNoInstance" style="display: none; text-align: center; padding: 20px 0;">
+                    <div style="font-size: 3rem; margin-bottom: 12px;">📱</div>
+                    <h4 style="margin-bottom: 8px;">Conecte seu WhatsApp</h4>
+                    <p class="text-muted mb-3">Crie uma instância para gerar o QR Code e conectar seu WhatsApp ao sistema.</p>
+                    <div class="form-group" style="max-width: 300px; margin: 0 auto 16px;">
+                        <input type="text" id="evoInstanceName" class="form-control" 
+                               placeholder="Nome da instância (ex: igreja-sede)"
+                               value="igreja-<?= strtolower(preg_replace('/[^a-zA-Z0-9]/', '', getSetting('igreja_nome', 'conectada'))) ?>">
+                        <small class="text-muted">Apenas letras, números e hífens</small>
                     </div>
-                    <?php if (can('integracoes', 'manage_settings')): ?>
-                    <div class="d-flex gap-1">
-                        <button class="btn btn-icon btn-sm btn-secondary" onclick="editarTemplate(<?= $tpl['id'] ?>)">
-                            <i data-lucide="edit"></i>
-                        </button>
-                        <button class="btn btn-icon btn-sm btn-outline-danger" onclick="excluirTemplate(<?= $tpl['id'] ?>)">
-                            <i data-lucide="trash-2"></i>
-                        </button>
-                    </div>
-                    <?php endif; ?>
+                    <button class="btn btn-primary" id="btnCriarInstancia" onclick="criarInstancia()">
+                        <i data-lucide="plus-circle"></i> Criar Instância e Gerar QR Code
+                    </button>
                 </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
+                
+                <!-- Estado: QR Code -->
+                <div id="evoQrCode" style="display: none; text-align: center; padding: 20px 0;">
+                    <h4 style="margin-bottom: 4px;">Escaneie o QR Code</h4>
+                    <p class="text-muted mb-3">Abra o WhatsApp no celular → Menu (⋮) → Aparelhos conectados → Conectar</p>
+                    <div id="evoQrImage" style="margin: 0 auto 16px; padding: 16px; background: white; border-radius: 12px; display: inline-block; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <div style="width: 256px; height: 256px; display: flex; align-items: center; justify-content: center;">
+                            <i data-lucide="loader" style="animation: spin 1s linear infinite;"></i> Carregando...
+                        </div>
+                    </div>
+                    <p class="text-muted" style="font-size: 0.85rem;">
+                        <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i>
+                        O QR Code atualiza automaticamente a cada 30 segundos
+                    </p>
+                </div>
+                
+                <!-- Estado: Conectado -->
+                <div id="evoConnected" style="display: none; text-align: center; padding: 20px 0;">
+                    <div style="width: 64px; height: 64px; border-radius: 50%; background: #dcfce7; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
+                        <i data-lucide="check" style="width: 32px; height: 32px; color: #16a34a;"></i>
+                    </div>
+                    <h4 style="margin-bottom: 4px; color: #16a34a;">WhatsApp Conectado!</h4>
+                    <p class="text-muted mb-0" id="evoPhoneInfo">Pronto para enviar mensagens</p>
+                    <div style="margin-top: 16px;">
+                        <button class="btn btn-outline-danger btn-sm" onclick="desconectarInstancia()">
+                            <i data-lucide="log-out"></i> Desconectar
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Loading -->
+                <div id="evoLoading" style="text-align: center; padding: 30px 0;">
+                    <i data-lucide="loader" style="width: 32px; height: 32px; animation: spin 1s linear infinite;"></i>
+                    <p class="text-muted mt-2">Verificando conexão...</p>
+                </div>
+            </div>
         </div>
+        
+        <!-- Info Evolution -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i data-lucide="info"></i>
+                    Sobre a Evolution API
+                </h3>
+            </div>
+            <div class="card-body">
+                <div style="padding: 8px 0;">
+                    <div class="d-flex align-center mb-2" style="gap: 12px; padding: 12px; background: var(--gray-50); border-radius: var(--border-radius);">
+                        <i data-lucide="check-circle" style="color: var(--success); flex-shrink: 0;"></i>
+                        <div>
+                            <strong>Integrada ao sistema</strong>
+                            <br><small class="text-muted">Não precisa configurar nenhuma credencial</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-center mb-2" style="gap: 12px; padding: 12px; background: var(--gray-50); border-radius: var(--border-radius);">
+                        <i data-lucide="qr-code" style="color: var(--primary); flex-shrink: 0;"></i>
+                        <div>
+                            <strong>Conexão por QR Code</strong>
+                            <br><small class="text-muted">Escaneie com o WhatsApp e pronto</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-center mb-2" style="gap: 12px; padding: 12px; background: var(--gray-50); border-radius: var(--border-radius);">
+                        <i data-lucide="zap" style="color: var(--warning); flex-shrink: 0;"></i>
+                        <div>
+                            <strong>Envio instantâneo</strong>
+                            <br><small class="text-muted">Mensagens enviadas em tempo real</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-center" style="gap: 12px; padding: 12px; background: var(--gray-50); border-radius: var(--border-radius);">
+                        <i data-lucide="shield-check" style="color: var(--info); flex-shrink: 0;"></i>
+                        <div>
+                            <strong>Seguro</strong>
+                            <br><small class="text-muted">Criptografia ponta a ponta do WhatsApp</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================= -->
+<!-- Z-API -->
+<!-- ============================================= -->
+<div id="panel-zapi" style="display: <?= $currentProvider === 'zapi' ? 'block' : 'none' ?>;">
+    <div class="grid grid-2" style="gap: 24px;">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i data-lucide="message-circle" style="color: #25D366;"></i>
+                    Configurações Z-API
+                </h3>
+                <?php if ($whatsappIntegration && $whatsappIntegration['ativo'] && $currentProvider === 'zapi'): ?>
+                <span class="badge badge-success">Ativo</span>
+                <?php endif; ?>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="<?= url('/integracoes/api.php') ?>" id="formZapi">
+                    <input type="hidden" name="action" value="save_whatsapp">
+                    <input type="hidden" name="provider" value="zapi">
+                    <?= csrfField() ?>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Instance ID</label>
+                        <input type="text" name="instance_id" class="form-control" autocomplete="off"
+                               value="<?= sanitize($whatsappIntegration['instance_id'] ?? '') ?>"
+                               placeholder="Seu Instance ID do Z-API">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Token</label>
+                        <input type="text" name="token" class="form-control" autocomplete="off"
+                               value="<?= sanitize($whatsappIntegration['token'] ?? '') ?>"
+                               placeholder="Seu Token do Z-API">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Client Token (Security)</label>
+                        <input type="text" name="api_key" class="form-control" autocomplete="off"
+                               value="<?= sanitize($whatsappIntegration['api_key'] ?? '') ?>"
+                               placeholder="Cole aqui o Client Token da Z-API">
+                        <small class="text-muted">
+                            Encontre em: Painel Z-API → sua instância → Security → Client Token
+                        </small>
+                    </div>
+                    
+                    <div class="form-check mb-2">
+                        <input type="checkbox" name="ativo" id="zapiAtivo" class="form-check-input"
+                               <?= ($whatsappIntegration['ativo'] ?? 0) && $currentProvider === 'zapi' ? 'checked' : '' ?>>
+                        <label for="zapiAtivo" class="form-check-label">Integração ativa</label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i data-lucide="save"></i> Salvar Configurações Z-API
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Info Z-API -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Sobre a Z-API</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">A Z-API é um serviço externo pago para envio de mensagens via WhatsApp.</p>
+                <div class="d-flex align-center mb-2" style="gap: 12px; padding: 12px; background: var(--gray-50); border-radius: var(--border-radius);">
+                    <i data-lucide="external-link" style="color: var(--primary); flex-shrink: 0;"></i>
+                    <div>
+                        <strong>Requer conta Z-API</strong>
+                        <br><small class="text-muted">Acesse <a href="https://z-api.io" target="_blank">z-api.io</a> para criar sua conta</small>
+                    </div>
+                </div>
+                <div class="d-flex align-center mb-2" style="gap: 12px; padding: 12px; background: var(--gray-50); border-radius: var(--border-radius);">
+                    <i data-lucide="key" style="color: var(--warning); flex-shrink: 0;"></i>
+                    <div>
+                        <strong>3 credenciais necessárias</strong>
+                        <br><small class="text-muted">Instance ID, Token e Client Token</small>
+                    </div>
+                </div>
+                <div class="d-flex align-center" style="gap: 12px; padding: 12px; background: var(--gray-50); border-radius: var(--border-radius);">
+                    <i data-lucide="credit-card" style="color: var(--danger); flex-shrink: 0;"></i>
+                    <div>
+                        <strong>Serviço pago</strong>
+                        <br><small class="text-muted">Planos a partir de R$ 49,90/mês</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
+<!-- Templates -->
+<div class="card mt-3">
+    <div class="card-header">
+        <h3 class="card-title">Templates de Mensagem</h3>
+        <?php if (can('integracoes', 'manage_settings')): ?>
+        <button class="btn btn-sm btn-primary" onclick="novoTemplate()">
+            <i data-lucide="plus"></i> Novo
+        </button>
+        <?php endif; ?>
+    </div>
+    <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+        <?php if (empty($templates)): ?>
+        <p class="text-muted text-center">Nenhum template cadastrado.</p>
+        <?php else: ?>
+            <?php foreach ($templates as $tpl): ?>
+            <div class="d-flex justify-between align-center mb-2" style="padding: 12px; background: var(--gray-50); border-radius: var(--border-radius);">
+                <div>
+                    <strong><?= sanitize($tpl['nome']) ?></strong>
+                    <?= $tpl['ativo'] ? '<span class="badge badge-success">Ativo</span>' : '<span class="badge badge-secondary">Inativo</span>' ?>
+                    <br><small class="text-muted"><?= sanitize(substr($tpl['mensagem'], 0, 60)) ?>...</small>
+                </div>
+                <?php if (can('integracoes', 'manage_settings')): ?>
+                <div class="d-flex gap-1">
+                    <button class="btn btn-icon btn-sm btn-secondary" onclick="editarTemplate(<?= $tpl['id'] ?>)">
+                        <i data-lucide="edit"></i>
+                    </button>
+                    <button class="btn btn-icon btn-sm btn-outline-danger" onclick="excluirTemplate(<?= $tpl['id'] ?>)">
+                        <i data-lucide="trash-2"></i>
+                    </button>
+                </div>
+                <?php endif; ?>
+            </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -186,28 +366,25 @@ include BASE_PATH . 'includes/header.php';
         </h3>
     </div>
     <div class="card-body">
-        <p class="text-muted mb-3">Envie uma mensagem de teste para verificar se a integração está funcionando corretamente.</p>
+        <p class="text-muted mb-3">Envie uma mensagem de teste para verificar se a integração está funcionando.</p>
         
         <form id="formTesteEnvio" onsubmit="enviarMensagemTeste(event)">
-            <div class="form-row">
+            <div class="grid grid-2" style="gap: 16px;">
                 <div class="form-group">
-                    <label class="form-label required">Número de Telefone (com DDD)</label>
+                    <label class="form-label required">Número (com DDD)</label>
                     <input type="text" id="testPhone" class="form-control" 
                            placeholder="Ex: 11999999999" required
-                           pattern="[0-9]{10,11}"
-                           title="Digite apenas números (DDD + telefone)">
-                    <small class="text-muted">Digite apenas números, sem espaços ou caracteres especiais</small>
+                           pattern="[0-9]{10,11}">
                 </div>
-                
                 <div class="form-group">
                     <label class="form-label required">Mensagem</label>
-                    <textarea id="testMessage" class="form-control" rows="4" required
-                              placeholder="Digite a mensagem de teste...">Olá! Esta é uma mensagem de teste do sistema da igreja. Se você recebeu esta mensagem, a integração está funcionando corretamente! 🙏</textarea>
+                    <textarea id="testMessage" class="form-control" rows="3" required
+                              placeholder="Mensagem de teste...">Olá! Teste do sistema da igreja. Se recebeu, a integração está funcionando! 🙏</textarea>
                 </div>
             </div>
             
             <button type="submit" class="btn btn-primary" id="btnEnviarTeste">
-                <i data-lucide="send"></i> Enviar Mensagem de Teste
+                <i data-lucide="send"></i> Enviar Teste
             </button>
         </form>
         
@@ -220,7 +397,6 @@ include BASE_PATH . 'includes/header.php';
 <div class="card mt-3">
     <div class="card-header">
         <h3 class="card-title">Log de Mensagens</h3>
-        <a href="<?= url('/integracoes/logs.php') ?>" class="text-primary text-sm">Ver todos →</a>
     </div>
     <div class="table-wrapper">
         <table class="table">
@@ -264,124 +440,257 @@ include BASE_PATH . 'includes/header.php';
     </div>
 </div>
 
+<style>
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.provider-card:hover { border-color: var(--primary) !important; background: var(--gray-50); }
+.provider-card.active { border-color: var(--primary) !important; background: rgba(59,130,246,0.05); }
+</style>
+
 <script>
-function enviarMensagemTeste(event) {
-    event.preventDefault();
+const API_URL = '<?= url('/integracoes/api.php') ?>';
+const CSRF = window.csrfToken;
+let qrInterval = null;
+let statusInterval = null;
+let currentProvider = '<?= $currentProvider ?>';
+let instanceName = '<?= sanitize($whatsappIntegration['instance_name'] ?? '') ?>';
+
+// =============================================
+// SELETOR DE PROVEDOR
+// =============================================
+function selecionarProvedor(provider) {
+    document.getElementById('panel-evolution').style.display = provider === 'evolution' ? 'block' : 'none';
+    document.getElementById('panel-zapi').style.display = provider === 'zapi' ? 'block' : 'none';
     
-    const phone = document.getElementById('testPhone').value;
-    const message = document.getElementById('testMessage').value;
-    const btnEnviar = document.getElementById('btnEnviarTeste');
-    const resultado = document.getElementById('testeResultado');
+    document.querySelectorAll('.provider-card').forEach(card => {
+        card.classList.remove('active');
+        card.style.borderColor = 'var(--gray-200)';
+    });
+    event.currentTarget.classList.add('active');
+    event.currentTarget.style.borderColor = 'var(--primary)';
     
-    // Validar telefone
-    if (!/^[0-9]{10,11}$/.test(phone)) {
-        showToast('Número de telefone inválido. Use apenas números (DDD + telefone)', 'error');
+    // Salvar escolha
+    fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+        body: JSON.stringify({ action: 'set_provider', provider: provider })
+    });
+    
+    currentProvider = provider;
+    
+    if (provider === 'evolution') {
+        verificarStatusEvolution();
+    } else {
+        pararVerificacao();
+    }
+}
+
+// =============================================
+// EVOLUTION API
+// =============================================
+function criarInstancia() {
+    const nameInput = document.getElementById('evoInstanceName');
+    const name = nameInput.value.trim().replace(/[^a-zA-Z0-9-]/g, '').toLowerCase();
+    
+    if (!name || name.length < 3) {
+        showToast('Nome da instância deve ter pelo menos 3 caracteres', 'error');
         return;
     }
     
-    // Desabilitar botão
-    btnEnviar.disabled = true;
-    btnEnviar.innerHTML = '<i data-lucide="loader"></i> Enviando...';
+    const btn = document.getElementById('btnCriarInstancia');
+    btn.disabled = true;
+    btn.innerHTML = '<i data-lucide="loader"></i> Criando instância...';
     lucide.createIcons();
     
-    // Limpar resultado anterior
-    resultado.style.display = 'none';
-    
-    fetch('<?= url('/integracoes/api.php') ?>', {
+    fetch(API_URL, {
         method: 'POST',
-        headers: { 
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': window.csrfToken 
-        },
-        body: JSON.stringify({
-            action: 'test_whatsapp',
-            phone: phone,
-            message: message
-        })
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+        body: JSON.stringify({ action: 'evo_create_instance', instance_name: name })
     })
     .then(r => r.json())
     .then(data => {
-        btnEnviar.disabled = false;
-        btnEnviar.innerHTML = '<i data-lucide="send"></i> Enviar Mensagem de Teste';
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="plus-circle"></i> Criar Instância e Gerar QR Code';
         lucide.createIcons();
         
         if (data.success) {
-            resultado.innerHTML = `
-                <div class="alert alert-success">
-                    <div class="alert-content">
-                        <i data-lucide="check-circle"></i>
-                        <div>
-                            <strong>Mensagem enviada com sucesso!</strong>
-                            <p class="mb-0">A mensagem foi enviada para ${phone}. Verifique o WhatsApp do destinatário.</p>
-                            ${data.message_id ? `<small class="text-muted">ID da mensagem: ${data.message_id}</small>` : ''}
-                        </div>
-                    </div>
-                </div>
-            `;
-            showToast('Mensagem de teste enviada!', 'success');
+            instanceName = name;
+            showToast('Instância criada! Escaneie o QR Code.', 'success');
+            
+            if (data.qrcode) {
+                mostrarQrCode(data.qrcode);
+            } else {
+                buscarQrCode();
+            }
+            
+            iniciarVerificacaoStatus();
         } else {
-            resultado.innerHTML = `
-                <div class="alert alert-danger">
-                    <div class="alert-content">
-                        <i data-lucide="alert-circle"></i>
-                        <div>
-                            <strong>Erro ao enviar mensagem</strong>
-                            <p class="mb-0">${data.message || 'Erro desconhecido. Verifique as configurações da API.'}</p>
-                            ${data.error ? `<small class="text-muted">Detalhes: ${data.error}</small>` : ''}
-                        </div>
-                    </div>
-                </div>
-            `;
-            showToast(data.message || 'Erro ao enviar', 'error');
+            showToast(data.message || data.error || 'Erro ao criar instância', 'error');
         }
-        
-        resultado.style.display = 'block';
-        lucide.createIcons();
     })
-    .catch(error => {
-        btnEnviar.disabled = false;
-        btnEnviar.innerHTML = '<i data-lucide="send"></i> Enviar Mensagem de Teste';
-        lucide.createIcons();
-        
-        resultado.innerHTML = `
-            <div class="alert alert-danger">
-                <div class="alert-content">
-                    <i data-lucide="alert-circle"></i>
-                    <div>
-                        <strong>Erro de conexão</strong>
-                        <p class="mb-0">Não foi possível conectar ao servidor. Tente novamente.</p>
-                    </div>
-                </div>
-            </div>
-        `;
-        resultado.style.display = 'block';
+    .catch(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="plus-circle"></i> Criar Instância e Gerar QR Code';
         lucide.createIcons();
         showToast('Erro de conexão', 'error');
     });
 }
 
-function testarWhatsApp() {
-    const telefone = prompt('Digite o número para teste (com DDD):');
-    if (!telefone) return;
+function buscarQrCode() {
+    if (!instanceName) return;
     
-    fetch('<?= url('/integracoes/api.php') ?>', {
+    fetch(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': window.csrfToken },
-        body: JSON.stringify({
-            action: 'test_whatsapp',
-            phone: telefone
-        })
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+        body: JSON.stringify({ action: 'evo_get_qrcode', instance_name: instanceName })
     })
     .then(r => r.json())
     .then(data => {
-        if (data.success) {
-            showToast('Mensagem de teste enviada!', 'success');
-        } else {
-            showToast(data.message || 'Erro ao enviar', 'error');
+        if (data.success && data.qrcode) {
+            mostrarQrCode(data.qrcode);
         }
     });
 }
 
+function mostrarQrCode(qrData) {
+    mostrarEstado('qrcode');
+    
+    const container = document.getElementById('evoQrImage');
+    
+    if (qrData.startsWith('data:image') || qrData.startsWith('http')) {
+        container.innerHTML = `<img src="${qrData}" alt="QR Code" style="width: 256px; height: 256px;">`;
+    } else {
+        // Base64
+        container.innerHTML = `<img src="data:image/png;base64,${qrData}" alt="QR Code" style="width: 256px; height: 256px;">`;
+    }
+    
+    // Atualizar QR a cada 30s
+    clearInterval(qrInterval);
+    qrInterval = setInterval(buscarQrCode, 30000);
+}
+
+function verificarStatusEvolution() {
+    if (!instanceName) {
+        mostrarEstado('no-instance');
+        return;
+    }
+    
+    fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+        body: JSON.stringify({ action: 'evo_check_status', instance_name: instanceName })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const state = (data.state || '').toLowerCase();
+            
+            if (state === 'open' || state === 'connected') {
+                mostrarEstado('connected');
+                document.getElementById('evoStatusBadge').className = 'badge badge-success';
+                document.getElementById('evoStatusBadge').textContent = 'Conectado';
+                if (data.phone) {
+                    document.getElementById('evoPhoneInfo').textContent = 'Número: ' + data.phone;
+                }
+                pararVerificacao();
+            } else if (state === 'close' || state === 'disconnected') {
+                buscarQrCode();
+                iniciarVerificacaoStatus();
+            } else {
+                mostrarEstado('no-instance');
+            }
+        } else {
+            mostrarEstado('no-instance');
+            document.getElementById('evoStatusBadge').className = 'badge badge-secondary';
+            document.getElementById('evoStatusBadge').textContent = 'Desconectado';
+        }
+    })
+    .catch(() => {
+        mostrarEstado('no-instance');
+    });
+}
+
+function iniciarVerificacaoStatus() {
+    clearInterval(statusInterval);
+    statusInterval = setInterval(verificarStatusEvolution, 5000);
+}
+
+function pararVerificacao() {
+    clearInterval(qrInterval);
+    clearInterval(statusInterval);
+}
+
+function desconectarInstancia() {
+    if (!confirm('Tem certeza que deseja desconectar o WhatsApp?')) return;
+    
+    fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+        body: JSON.stringify({ action: 'evo_logout', instance_name: instanceName })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            showToast('WhatsApp desconectado', 'success');
+            mostrarEstado('no-instance');
+            document.getElementById('evoStatusBadge').className = 'badge badge-secondary';
+            document.getElementById('evoStatusBadge').textContent = 'Desconectado';
+        } else {
+            showToast(data.message || 'Erro ao desconectar', 'error');
+        }
+    });
+}
+
+function mostrarEstado(state) {
+    document.getElementById('evoLoading').style.display = 'none';
+    document.getElementById('evoNoInstance').style.display = state === 'no-instance' ? 'block' : 'none';
+    document.getElementById('evoQrCode').style.display = state === 'qrcode' ? 'block' : 'none';
+    document.getElementById('evoConnected').style.display = state === 'connected' ? 'block' : 'none';
+}
+
+// =============================================
+// TESTE DE ENVIO
+// =============================================
+function enviarMensagemTeste(event) {
+    event.preventDefault();
+    
+    const phone = document.getElementById('testPhone').value;
+    const message = document.getElementById('testMessage').value;
+    const btn = document.getElementById('btnEnviarTeste');
+    const resultado = document.getElementById('testeResultado');
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i data-lucide="loader"></i> Enviando...';
+    lucide.createIcons();
+    resultado.style.display = 'none';
+    
+    fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+        body: JSON.stringify({ action: 'test_whatsapp', phone: phone, message: message })
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="send"></i> Enviar Teste';
+        lucide.createIcons();
+        
+        resultado.innerHTML = data.success
+            ? `<div class="alert alert-success"><strong>Mensagem enviada com sucesso!</strong> Verifique o WhatsApp do destinatário.</div>`
+            : `<div class="alert alert-danger"><strong>Erro:</strong> ${data.message || data.error || 'Erro desconhecido'}</div>`;
+        resultado.style.display = 'block';
+    })
+    .catch(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="send"></i> Enviar Teste';
+        lucide.createIcons();
+        resultado.innerHTML = `<div class="alert alert-danger"><strong>Erro de conexão.</strong> Tente novamente.</div>`;
+        resultado.style.display = 'block';
+    });
+}
+
+// =============================================
+// TEMPLATES
+// =============================================
 function novoTemplate() {
     openModal({
         title: 'Novo Template',
@@ -418,9 +727,9 @@ function salvarTemplate(id = null) {
         ativo: document.getElementById('tplAtivo').checked ? 1 : 0
     };
     
-    fetch('<?= url('/integracoes/api.php') ?>', {
+    fetch(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': window.csrfToken },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
         body: JSON.stringify(data)
     })
     .then(r => r.json())
@@ -436,7 +745,7 @@ function salvarTemplate(id = null) {
 }
 
 function editarTemplate(id) {
-    fetch('<?= url('/integracoes/api.php') ?>?action=get_template&id=' + id)
+    fetch(API_URL + '?action=get_template&id=' + id)
         .then(r => r.json())
         .then(data => {
             if (data.success) {
@@ -470,9 +779,9 @@ function editarTemplate(id) {
 
 function excluirTemplate(id) {
     confirmAction('Deseja excluir este template?', () => {
-        fetch('<?= url('/integracoes/api.php') ?>', {
+        fetch(API_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': window.csrfToken },
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
             body: JSON.stringify({ action: 'delete_template', id: id })
         })
         .then(r => r.json())
@@ -484,6 +793,15 @@ function excluirTemplate(id) {
         });
     });
 }
+
+// =============================================
+// INICIALIZAÇÃO
+// =============================================
+document.addEventListener('DOMContentLoaded', function() {
+    if (currentProvider === 'evolution') {
+        verificarStatusEvolution();
+    }
+});
 </script>
 
 <?php include BASE_PATH . 'includes/footer.php'; ?>

@@ -131,6 +131,10 @@ define('MEMBER_POSITIONS', [
     'tia_min_infantil' => 'Tia Min. Infantil'
 ]);
 
+// Evolution API (pré-configurada pelo sistema)
+define('EVOLUTION_API_URL', 'https://api.igrejaconectada.com.br');
+define('EVOLUTION_API_KEY', 'B6D711FCDE4D4FD5936544120E713976');
+
 // Tipos de evento
 define('EVENT_TYPES', [
     'culto' => 'Culto',
